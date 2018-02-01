@@ -65,6 +65,37 @@ contract('Token (integration)', function(accounts) {
     assert.strictEqual(resultAllowance.toNumber(), tokenWei);
   });
 
+  it('should fail to [transferFrom] more than allowed', async function() {
+    let from = owner;
+    let to = web3.eth.accounts[2];
+    let spenderPrivateKey = privateKeys[2];
+    let tokenWei = 10000000;
+
+    let allowance = await contract.allowance.call(from, to);
+    let ownerBalance = await contract.balanceOf.call(from);
+    let spenderBalance = await contract.balanceOf.call(to);
+
+    data = web3Contract.transferFrom.getData(from, to, tokenWei);
+
+    let errorMessage;
+    try {
+      await rawTransaction(
+        to,
+        spenderPrivateKey,
+        contract.address,
+        data,
+        0
+      );
+    } catch (error) {
+      errorMessage = error.message;
+    }
+
+    assert.strictEqual(
+      errorMessage,
+      'VM Exception while processing transaction: invalid opcode'
+    );
+  });
+
   it('should [transferFrom] approved tokens', async function() {
     let from = owner;
     let to = web3.eth.accounts[2];
